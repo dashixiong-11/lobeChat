@@ -21,11 +21,9 @@ interface FetchOptions {
   signal?: AbortSignal | undefined;
 }
 
-
 interface GetChatCompletionPayload extends Partial<Omit<OpenAIChatStreamPayload, 'messages'>> {
   messages: ChatMessage[];
 }
-
 
 class ChatService {
   createAssistantMessage = async (
@@ -34,6 +32,7 @@ class ChatService {
   ) => {
     const payload = merge(
       {
+        dsx: 111,
         model: DEFAULT_AGENT_CONFIG.model,
         stream: true,
         ...DEFAULT_AGENT_CONFIG.params,
@@ -66,13 +65,13 @@ class ChatService {
   getChatCompletion = (params: Partial<OpenAIChatStreamPayload>, options?: FetchOptions) => {
     const payload = merge(
       {
+        dsx: 222,
         model: DEFAULT_AGENT_CONFIG.model,
         stream: true,
         ...DEFAULT_AGENT_CONFIG.params,
       },
       params,
     );
-
 
     return fetch(OPENAI_URLS.chat, {
       body: JSON.stringify(payload),

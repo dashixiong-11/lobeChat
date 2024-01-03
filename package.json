@@ -29,7 +29,7 @@
     "build": "next build",
     "build:analyze": "ANALYZE=true next build",
     "build:docker": "DOCKER=true next build",
-    "dev": "next dev -p 3010",
+    "dev": "next dev -H 0.0.0.0 -p 3010",
     "docs": "lobe-i18n md && npm run workflow:docs",
     "i18n": "npm run workflow:i18n && lobe-i18n",
     "lint": "npm run lint:ts && npm run lint:style && npm run type-check && npm run lint:circular",
@@ -50,25 +50,6 @@
     "workflow:docs": "bun scripts/docsWorkflow/index.ts",
     "workflow:i18n": "ts-node --project ./tsconfig.json scripts/i18nWorkflow/index.ts",
     "workflow:readme": "bun scripts/readmeWorkflow/index.ts"
-  },
-  "lint-staged": {
-    "*.md": [
-      "remark --quiet --output --",
-      "prettier --write --no-error-on-unmatched-pattern"
-    ],
-    "*.json": [
-      "prettier --write --no-error-on-unmatched-pattern"
-    ],
-    "*.{js,jsx}": [
-      "prettier --write",
-      "stylelint --fix",
-      "eslint --fix"
-    ],
-    "*.{ts,tsx}": [
-      "prettier --parser=typescript --write",
-      "stylelint --fix",
-      "eslint --fix"
-    ]
   },
   "dependencies": {
     "@ant-design/icons": "^5",

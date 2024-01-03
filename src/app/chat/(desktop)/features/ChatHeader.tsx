@@ -35,8 +35,6 @@ const Left = memo(() => {
     ],
   );
 
-console.log(model);
-
   const displayTitle = isInbox ? t('inbox.title') : title;
   const displayDesc = isInbox ? t('inbox.desc') : description;
 
