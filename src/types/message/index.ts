@@ -40,6 +40,8 @@ export interface ChatMessage extends BaseDataModel {
     translate?: ChatTranslate | null;
     // TTS
     tts?: ChatTTS;
+    conversation_id?:string,
+    parent_message_id?:string
   } & Record<string, any>;
 
   files?: string[];

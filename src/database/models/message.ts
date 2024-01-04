@@ -8,7 +8,7 @@ import { nanoid } from '@/utils/uuid';
 
 export interface CreateMessageParams
   extends Partial<Omit<ChatMessage, 'content' | 'role'>>,
-    Pick<ChatMessage, 'content' | 'role'> {
+  Pick<ChatMessage, 'content' | 'role'> {
   sessionId: string;
 }
 
@@ -25,8 +25,8 @@ class _MessageModel extends BaseModel {
   }
   async create(data: CreateMessageParams) {
     const id = nanoid();
-
     const messageData: DB_Message = this.mapChatMessageToDBMessage(data as ChatMessage);
+
 
     return this._add(messageData, id);
   }
@@ -48,11 +48,11 @@ class _MessageModel extends BaseModel {
     const query =
       topicId !== undefined
         ? // TODO: The query {"sessionId":"xxx","topicId":"xxx"} on messages would benefit of a compound index [sessionId+topicId]
-          this.table.where({ sessionId, topicId }) // Use a compound index
+        this.table.where({ sessionId, topicId }) // Use a compound index
         : this.table
-            .where('sessionId')
-            .equals(sessionId)
-            .and((message) => !message.topicId);
+          .where('sessionId')
+          .equals(sessionId)
+          .and((message) => !message.topicId);
 
     const dbMessages: DBModel<DB_Message>[] = await query
       .sortBy('createdAt')
@@ -82,6 +82,8 @@ class _MessageModel extends BaseModel {
         addItem(item);
       }
     }
+    console.log('finalList', finalList);
+
     return finalList;
   }
 
@@ -98,7 +100,35 @@ class _MessageModel extends BaseModel {
   }
 
   async update(id: string, data: DeepPartial<DB_Message>) {
-    return super._update(id, data);
+    const message = data.content
+    const ids = {
+        conversation_id: undefined, parent_message_id: undefined
+    } 
+    const result = [];
+
+
+    if (message) {
+      const regex = /0:"(.*?)(?<!\\)"|2:\[(.*?)\]/g;
+
+      let match;
+
+      while ((match = regex.exec(message)) !== null) {
+        if (match[1]) {
+          result.push(match[1].replace(/\\"/g, '"'));
+      } else if (match[2]) {
+          try {
+              const jsonArray = JSON.parse(match[2]);
+              Object.assign(ids,jsonArray)
+          } catch (e) {
+              console.error('Error parsing JSON:', e);
+          }
+      }
+      }
+    }
+
+    return super._update(id, {
+      content: result.join(''), ...ids
+    });
   }
 
   /**
@@ -140,9 +170,9 @@ class _MessageModel extends BaseModel {
       topicId !== undefined
         ? this.table.where({ sessionId, topicId }) // Use a compound index
         : this.table
-            .where('sessionId')
-            .equals(sessionId)
-            .and((message) => message.topicId === undefined);
+          .where('sessionId')
+          .equals(sessionId)
+          .and((message) => message.topicId === undefined);
 
     // Retrieve a collection of message IDs that satisfy the criteria
     const messageIds = await query.primaryKeys();
@@ -177,11 +207,13 @@ class _MessageModel extends BaseModel {
     fromModel,
     translate,
     tts,
+    parent_message_id,
+    conversation_id,
     ...item
   }: DBModel<DB_Message>): ChatMessage => {
     return {
       ...item,
-      extra: { fromModel: fromModel, translate: translate, tts: tts },
+      extra: { fromModel: fromModel, translate: translate, tts: tts, parent_message_id: parent_message_id, conversation_id: conversation_id },
       meta: {},
     };
   };

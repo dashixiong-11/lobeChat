@@ -159,6 +159,8 @@ export class BaseModel<N extends keyof LocalDBSchema = any, T = LocalDBSchema[N]
       console.error(newError);
       throw newError;
     }
+    console.log(data);
+    
 
     const success = await this.table.update(id, { ...data, updatedAt: Date.now() });
 

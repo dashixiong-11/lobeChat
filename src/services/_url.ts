@@ -4,7 +4,6 @@ export const URLS = {
   plugins: '/api/plugins',
 };
 
- // chat: '/api/openai/chat',
 export const OPENAI_URLS = {
   chat: '/api/openai/chat',
   images: '/api/openai/images',

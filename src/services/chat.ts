@@ -11,7 +11,6 @@ import { ChatMessage } from '@/types/message';
 import type { OpenAIChatMessage, OpenAIChatStreamPayload } from '@/types/openai/chat';
 import { UserMessageContentPart } from '@/types/openai/chat';
 import { fetchAIFactory, getMessageError } from '@/utils/fetch';
-
 import { createHeaderWithOpenAI } from './_header';
 import { OPENAI_URLS, URLS } from './_url';
 
@@ -32,7 +31,6 @@ class ChatService {
   ) => {
     const payload = merge(
       {
-        dsx: 111,
         model: DEFAULT_AGENT_CONFIG.model,
         stream: true,
         ...DEFAULT_AGENT_CONFIG.params,
@@ -46,6 +44,10 @@ class ChatService {
       model: payload.model,
       tools: enabledPlugins,
     });
+    console.log('oaiMessages',oaiMessages);
+    console.log('messages',messages);
+    
+
 
     // ============  2. preprocess tools   ============ //
 
@@ -58,11 +60,14 @@ class ChatService {
     const shouldUseTools = filterTools.length > 0 && !isVisionModel(payload.model);
 
     const functions = shouldUseTools ? filterTools : undefined;
+    
 
     return this.getChatCompletion({ ...params, functions, messages: oaiMessages }, options);
   };
 
   getChatCompletion = (params: Partial<OpenAIChatStreamPayload>, options?: FetchOptions) => {
+    
+
     const payload = merge(
       {
         dsx: 222,
@@ -144,16 +149,16 @@ class ChatService {
     const postMessages = messages.map((m): OpenAIChatMessage => {
       switch (m.role) {
         case 'user': {
-          return { content: getContent(m), role: m.role };
+          return { content: getContent(m), role: m.role,conversation_id:m.extra?.conversation_id,parent_message_id:m.extra?.parent_message_id };
         }
 
         case 'function': {
           const name = m.plugin?.identifier as string;
-          return { content: m.content, name, role: m.role };
+          return { content: m.content, name, role: m.role,conversation_id:m.extra?.conversation_id,parent_message_id:m.extra?.parent_message_id };
         }
 
         default: {
-          return { content: m.content, role: m.role };
+          return { content: m.content, role: m.role,conversation_id:m.extra?.conversation_id,parent_message_id:m.extra?.parent_message_id };
         }
       }
     });

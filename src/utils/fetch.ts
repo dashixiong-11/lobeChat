@@ -51,6 +51,7 @@ export const fetchSSE = async (fetchFn: () => Promise<Response>, options: FetchS
 
   const data = response.body;
 
+
   if (!data) return;
   let output = '';
   const reader = data.getReader();
@@ -97,33 +98,33 @@ interface FetchAITaskResultParams<T> {
 
 export const fetchAIFactory =
   <T>(fetcher: (params: T, options: { signal?: AbortSignal }) => Promise<Response>) =>
-  async ({
-    params,
-    onMessageHandle,
-    onFinish,
-    onError,
-    onLoadingChange,
-    abortController,
-  }: FetchAITaskResultParams<T>) => {
-    const errorHandle = (error: Error, errorContent?: any) => {
-      onLoadingChange?.(false);
-      if (abortController?.signal.aborted) {
-        return;
-      }
-      onError?.(error, errorContent);
-    };
-
-    onLoadingChange?.(true);
-
-    const data = await fetchSSE(() => fetcher(params, { signal: abortController?.signal }), {
-      onErrorHandle: (error) => {
-        errorHandle(new Error(error.message), error);
-      },
-      onFinish,
+    async ({
+      params,
       onMessageHandle,
-    }).catch(errorHandle);
+      onFinish,
+      onError,
+      onLoadingChange,
+      abortController,
+    }: FetchAITaskResultParams<T>) => {
+      const errorHandle = (error: Error, errorContent?: any) => {
+        onLoadingChange?.(false);
+        if (abortController?.signal.aborted) {
+          return;
+        }
+        onError?.(error, errorContent);
+      };
 
-    onLoadingChange?.(false);
+      onLoadingChange?.(true);
 
-    return await data?.text();
-  };
+      const data = await fetchSSE(() => fetcher(params, { signal: abortController?.signal }), {
+        onErrorHandle: (error) => {
+          errorHandle(new Error(error.message), error);
+        },
+        onFinish,
+        onMessageHandle,
+      }).catch(errorHandle);
+
+      onLoadingChange?.(false);
+
+      return await data?.text();
+    };

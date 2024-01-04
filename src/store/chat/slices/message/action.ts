@@ -214,6 +214,7 @@ export const chatMessage: StateCreator<
         messageService.getMessages(sessionId, topicId),
       {
         onSuccess: (messages, key) => {
+          
           set(
             { activeId: sessionId, messages, messagesInit: true },
             false,
@@ -230,6 +231,9 @@ export const chatMessage: StateCreator<
       },
     ),
   refreshMessages: async () => {
+    // console.log(get().activeId,get().activeTopicId);
+    
+
     await mutate([get().activeId, get().activeTopicId]);
   },
 
@@ -294,6 +298,7 @@ export const chatMessage: StateCreator<
     set({ messages }, false, n(`dispatchMessage/${payload.type}`, payload));
   },
   fetchAIChatMessage: async (messages, assistantId) => {
+    
     const { toggleChatLoading, refreshMessages } = get();
 
     const abortController = toggleChatLoading(
@@ -369,6 +374,7 @@ export const chatMessage: StateCreator<
       },
       onFinish: async (content) => {
         // update the content after fetch result
+        
         await messageService.updateMessageContent(assistantId, content);
         await refreshMessages();
       },

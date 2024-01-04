@@ -55,7 +55,6 @@ export const chatTopic: StateCreator<
       saveToTopic();
     }
   },
-
   saveToTopic: async () => {
     // if there is no message, stop
     const messages = chatSelectors.currentChats(get());
@@ -73,7 +72,7 @@ export const chatTopic: StateCreator<
 
     // 2. auto summary topic Title
     // we don't need to wait for summary, just let it run async
-    summaryTopicTitle(topicId, messages);
+    // summaryTopicTitle(topicId, messages);
 
     return topicId;
   },
@@ -111,6 +110,7 @@ export const chatTopic: StateCreator<
     await get().refreshTopic();
   },
   updateTopicTitle: async (id, title) => {
+
     await topicService.updateTitle(id, title);
     await get().refreshTopic();
   },
@@ -129,8 +129,8 @@ export const chatTopic: StateCreator<
       },
     }),
   switchTopic: async (id) => {
-    set({ activeTopicId: id }, false, n('toggleTopic'));
-
+    console.log('switchTopic', id);
+    set({ activeTopicId: id,  }, false, n('toggleTopic'));
     await get().refreshMessages();
   },
   // delete

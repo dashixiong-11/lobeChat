@@ -16,6 +16,7 @@ const SaveTopic = memo<{ mobile?: boolean }>(({ mobile }) => {
     s.openNewTopicOrSaveTopic,
   ]);
 
+
   const icon = hasTopic ? LucideMessageSquarePlus : LucideGalleryVerticalEnd;
   const Render = mobile ? ActionIcon : Button;
   const iconRender: any = mobile ? icon : <Icon icon={icon} />;

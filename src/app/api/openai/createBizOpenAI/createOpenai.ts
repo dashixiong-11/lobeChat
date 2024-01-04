@@ -10,8 +10,6 @@ export const createOpenai = (userApiKey: string | null, endpoint?: string | null
   const baseURL = endpoint ? endpoint : OPENAI_PROXY_URL ? OPENAI_PROXY_URL : undefined;
 
   const apiKey = !userApiKey ? OPENAI_API_KEY : userApiKey;
-  console.log('aipKey', apiKey);
-  console.log('baseUrl', baseURL);
 
   if (!apiKey) throw new Error('OPENAI_API_KEY is empty', { cause: ChatErrorType.NoAPIKey });
 

@@ -11,6 +11,7 @@ import {
 
 export class MessageService {
   async create(data: CreateMessageParams) {
+    
     const { id } = await MessageModel.create(data);
 
     return id;
@@ -38,6 +39,7 @@ export class MessageService {
   }
 
   async updateMessageContent(id: string, content: string) {
+    
     return MessageModel.update(id, { content });
   }
 
