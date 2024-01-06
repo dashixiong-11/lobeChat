@@ -375,12 +375,15 @@ export const chatMessage: StateCreator<
       onFinish: async (content) => {
         // update the content after fetch result
         
+        console.log('on finish', content);
+        
         await messageService.updateMessageContent(assistantId, content);
         await refreshMessages();
       },
       onMessageHandle: async (text) => {
         output += text;
 
+        console.log('onMessageHandle', text);
         await messageService.updateMessageContent(assistantId, output);
         await refreshMessages();
 

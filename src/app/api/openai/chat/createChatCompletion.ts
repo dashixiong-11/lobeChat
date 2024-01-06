@@ -30,21 +30,8 @@ export const createChatCompletion = async ({ payload, openai }: CreateChatComple
     );
 
 
-    const stream = OpenAIStream((response as any), {
-
-      onChunk: (chunk) => {
-        if (chunk.conversation_id && chunk.parent_message_id) {
-          data.append({
-            conversation_id: chunk.conversation_id,
-            parent_message_id: chunk.parent_message_id
-          })
-          data.close()
-        }
-      },
-      experimental_streamData: true
-    });
-    return new StreamingTextResponse(stream, {
-    }, data);
+    const stream = OpenAIStream(response as any);
+    return new StreamingTextResponse(stream);
   } catch (error) {
     // Check if the error is an OpenAI APIError
     if (error instanceof OpenAI.APIError) {

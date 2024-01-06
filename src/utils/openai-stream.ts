@@ -69,6 +69,8 @@ interface ChatCompletionChunk {
   created: number
   model: string
   object: string
+  conversation_id?: string
+  parent_message_id?: string
 }
 
 // https://github.com/openai/openai-node/blob/07b3504e1c40fd929f4aae1651b83afc19e3baf8/src/resources/chat/completions.ts#L43-L49
@@ -144,6 +146,11 @@ interface Completion {
    * The object type, which is always "text_completion"
    */
   object: string
+
+
+  conversation_id?: string
+  parent_message_id?: string
+
 }
 
 interface CompletionChoice {
@@ -160,6 +167,8 @@ interface CompletionChoice {
   logprobs: any | null
 
   text: string
+
+  delta: { content: string }
 }
 
 /**
@@ -195,92 +204,6 @@ function chunkToText(): (chunk: OpenAIStreamReturnTypes) => string | void {
   const trimStartOfStream = trimStartOfStreamHelper()
   let isFunctionStreamingIn: boolean
   return json => {
-    /*
-       If the response is a function call, the first streaming chunk from OpenAI returns the name of the function like so
-
-          {
-            ...
-            "choices": [{
-              "index": 0,
-              "delta": {
-                "role": "assistant",
-                "content": null,
-                "function_call": {
-                  "name": "get_current_weather",
-                  "arguments": ""
-                }
-              },
-              "finish_reason": null
-            }]
-          }
-
-       Then, it begins streaming the arguments for the function call.
-       The second chunk looks like:
-
-          {
-            ...
-            "choices": [{
-              "index": 0,
-              "delta": {
-                "function_call": {
-                  "arguments": "{\n"
-                }
-              },
-              "finish_reason": null
-            }]
-          }
-
-        Third chunk:
-
-          {
-            ...
-            "choices": [{
-              "index": 0,
-              "delta": {
-                "function_call": {
-                  "arguments": "\"location"
-                }
-              },
-              "finish_reason": null
-            }]
-          }
-
-        ...
-
-        Finally, the last chunk has a `finish_reason` of either `function_call`:
-
-          {
-            ...
-            "choices": [{
-              "index": 0,
-              "delta": {},
-              "finish_reason": "function_call"
-            }]
-          }
-
-        or `stop`, when the `function_call` request parameter 
-        is specified with a particular function via `{\"name\": \"my_function\"}` 
-
-          {
-            ...
-            "choices": [{
-              "index": 0,
-              "delta": {},
-              "finish_reason": "stop"
-            }]
-          }
-
-        With the implementation below, the client will end up getting a
-        response like the one below streamed to them whenever a function call
-        response is returned:
-
-          {
-            "function_call": {
-              "name": "get_current_weather",
-              "arguments": "{\"location\": \"San Francisco, CA\", \"format\": \"celsius\"}
-            }
-          }
-     */
     if (
       isChatCompletionChunk(json) &&
       json.choices[0]?.delta?.function_call?.name
@@ -312,12 +235,22 @@ function chunkToText(): (chunk: OpenAIStreamReturnTypes) => string | void {
       isFunctionStreamingIn = false // Reset the flag
       return '"}}'
     }
+    let content
+    const cp:OpenAIStreamReturnTypes = JSON.parse(JSON.stringify(json))
+    if (json.conversation_id && json.parent_message_id) {
+      content = `${json.choices[0].delta.content} {"conversation_id":"${json.conversation_id}","parent_message_id":"${json.parent_message_id}"}`
+    } else {
+      content = json.choices[0].delta.content
+    }
+    cp.choices[0].delta.content = content
+
+
 
     const text = trimStartOfStream(
-      isChatCompletionChunk(json) && json.choices[0].delta.content
-        ? json.choices[0].delta.content
-        : isCompletion(json)
-          ? json.choices[0].text
+      isChatCompletionChunk(cp) && cp.choices[0].delta.content
+        ? cp.choices[0].delta.content
+        : isCompletion(cp)
+          ? cp.choices[0].text
           : ''
     )
     return text
@@ -397,7 +330,7 @@ export function OpenAIStream(
   }
 
 
-  if (cb && cb.experimental_onFunctionCall ) {
+  if (cb && cb.experimental_onFunctionCall) {
     const functionCallTransformer = createFunctionCallTransformer(cb)
     return stream.pipeThrough(functionCallTransformer)
   } else {
@@ -410,7 +343,7 @@ export function OpenAIStream(
 function createFunctionCallTransformer(
   callbacks: OpenAIStreamCallbacks & {
     [__internal__OpenAIFnMessagesSymbol]?: CreateMessage[]
-  } 
+  }
 ): TransformStream<Uint8Array, Uint8Array> {
 
   const textEncoder = new TextEncoder()

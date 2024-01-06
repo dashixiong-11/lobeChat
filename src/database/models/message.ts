@@ -82,7 +82,7 @@ class _MessageModel extends BaseModel {
         addItem(item);
       }
     }
-    console.log('finalList', finalList);
+    // console.log('finalList', finalList);
 
     return finalList;
   }
@@ -102,32 +102,42 @@ class _MessageModel extends BaseModel {
   async update(id: string, data: DeepPartial<DB_Message>) {
     const message = data.content
     const ids = {
-        conversation_id: undefined, parent_message_id: undefined
-    } 
-    const result = [];
+      conversation_id: undefined, parent_message_id: undefined
+    }
+
+    let pattern = /\{"conversation_id":"[a-z0-9-]+","parent_message_id":"[a-z0-9-]+"\}/;
+    // let pattern = /\{conversation_id: "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}", parent_message_id: "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"\}/;
+
+
+    // 使用match方法来找到匹配的部分
+
+
+    let modifiedText = ''
 
 
     if (message) {
-      const regex = /0:"(.*?)(?<!\\)"|2:\[(.*?)\]/g;
 
-      let match;
 
-      while ((match = regex.exec(message)) !== null) {
-        if (match[1]) {
-          result.push(match[1].replace(/\\"/g, '"'));
-      } else if (match[2]) {
-          try {
-              const jsonArray = JSON.parse(match[2]);
-              Object.assign(ids,jsonArray)
-          } catch (e) {
-              console.error('Error parsing JSON:', e);
-          }
+      // 使用replace方法将匹配到的部分替换为空
+      modifiedText = message.replace(pattern, '');
+      const matchedPart = message.match(pattern)?.[0];
+
+      console.log('message', message);
+      console.log('matchedPart', matchedPart);
+      if (matchedPart) {
+        console.log('matchedPart222', matchedPart);
+        const parseJSON = JSON.parse(matchedPart || '')
+        console.log('parseJSON', parseJSON);
+        Object.assign(ids, parseJSON)
       }
-      }
+
+
     }
 
+    console.log('ids', ids);
+
     return super._update(id, {
-      content: result.join(''), ...ids
+      content: modifiedText, ...ids
     });
   }
 
