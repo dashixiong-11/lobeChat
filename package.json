@@ -141,6 +141,7 @@
     "jsdom": "^23.0.0",
     "just-diff": "^6",
     "lint-staged": "^15",
+    "husky": "^8",
     "lodash": "^4",
     "markdown-table": "^3",
     "node-fetch": "^3",
