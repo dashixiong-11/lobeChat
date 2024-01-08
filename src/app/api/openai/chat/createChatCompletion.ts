@@ -1,4 +1,4 @@
-import { StreamingTextResponse  } from 'ai';
+import { StreamingTextResponse } from 'ai';
 import { OpenAIStream } from '@/utils/openai-stream'
 import OpenAI from 'openai';
 
