@@ -60,7 +60,7 @@ export const chatTopic: StateCreator<
     const messages = chatSelectors.currentChats(get());
     if (messages.length === 0) return;
 
-    const { activeId, summaryTopicTitle, refreshTopic } = get();
+    const { activeId, refreshTopic } = get();
 
     // 1. create topic and bind these messages
     const topicId = await topicService.createTopic({

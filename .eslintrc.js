@@ -15,5 +15,8 @@ config.rules['react/no-unknown-property'] = 0;
 config.rules['unicorn/prefer-ternary'] = 0;
 config.rules['unicorn/prefer-spread'] = 0;
 config.rules['unused-imports/no-unused-vars'] = 0;
+config.rules['sort-keys-fix/sort-keys-fix'] = 0;
+config.rules['typescript-sort-keys/interface'] = 0;
+config.rules['no-constant-condition'] = 0;
 
 module.exports = config;

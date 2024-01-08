@@ -1,4 +1,4 @@
-import { StreamingTextResponse, experimental_StreamData } from 'ai';
+import { StreamingTextResponse  } from 'ai';
 import { OpenAIStream } from '@/utils/openai-stream'
 import OpenAI from 'openai';
 
@@ -18,7 +18,6 @@ export const createChatCompletion = async ({ payload, openai }: CreateChatComple
 
 
   // ============  2. send api   ============ //
-  const data = new experimental_StreamData();
   try {
     const response = await openai.chat.completions.create(
       {

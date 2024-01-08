@@ -1,4 +1,3 @@
-
 import {
   AIStream,
   trimStartOfStreamHelper,
@@ -163,6 +162,7 @@ interface CompletionChoice {
 
   index: number
 
+
   // edited: Removed CompletionChoice.logProbs and replaced with any
   logprobs: any | null
 
@@ -185,87 +185,6 @@ function parseOpenAIStream(): (data: string) => string | void {
   }
 }
 
-/**
- * Reads chunks from OpenAI's new Streamable interface, which is essentially
- * the same as the old Response body interface with an included SSE parser
- * doing the parsing for us.
- */
-async function* streamable(stream: AsyncIterableOpenAIStreamReturnTypes, cb?: (chunk: ChatCompletionChunk | Completion) => void) {
-  const extract = chunkToText()
-  for await (const chunk of stream) {
-    const text = extract(chunk)
-    cb && cb(chunk)
-
-    if (text) yield text
-  }
-}
-
-function chunkToText(): (chunk: OpenAIStreamReturnTypes) => string | void {
-  const trimStartOfStream = trimStartOfStreamHelper()
-  let isFunctionStreamingIn: boolean
-  return json => {
-    if (
-      isChatCompletionChunk(json) &&
-      json.choices[0]?.delta?.function_call?.name
-    ) {
-      isFunctionStreamingIn = true
-      return `{"function_call": {"name": "${json.choices[0]?.delta?.function_call.name}", "arguments": "`
-    } else if (
-      isChatCompletionChunk(json) &&
-      json.choices[0]?.delta?.function_call?.arguments
-    ) {
-      const argumentChunk: string =
-        json.choices[0].delta.function_call.arguments
-
-      let escapedPartialJson = argumentChunk
-        .replace(/\\/g, '\\\\') // Replace backslashes first to prevent double escaping
-        .replace(/\//g, '\\/') // Escape slashes
-        .replace(/"/g, '\\"') // Escape double quotes
-        .replace(/\n/g, '\\n') // Escape new lines
-        .replace(/\r/g, '\\r') // Escape carriage returns
-        .replace(/\t/g, '\\t') // Escape tabs
-        .replace(/\f/g, '\\f') // Escape form feeds
-
-      return `${escapedPartialJson}`
-    } else if (
-      isFunctionStreamingIn &&
-      (json.choices[0]?.finish_reason === 'function_call' ||
-        json.choices[0]?.finish_reason === 'stop')
-    ) {
-      isFunctionStreamingIn = false // Reset the flag
-      return '"}}'
-    }
-    let content
-    const cp:OpenAIStreamReturnTypes = JSON.parse(JSON.stringify(json))
-    if (json.conversation_id && json.parent_message_id) {
-      content = `${json.choices[0].delta.content} {"conversation_id":"${json.conversation_id}","parent_message_id":"${json.parent_message_id}"}`
-    } else {
-      content = json.choices[0].delta.content
-    }
-    cp.choices[0].delta.content = content
-
-
-
-    const text = trimStartOfStream(
-      isChatCompletionChunk(cp) && cp.choices[0].delta.content
-        ? cp.choices[0].delta.content
-        : isCompletion(cp)
-          ? cp.choices[0].text
-          : ''
-    )
-    return text
-  }
-}
-
-const __internal__OpenAIFnMessagesSymbol = Symbol('internal_openai_fn_messages')
-
-type AsyncIterableOpenAIStreamReturnTypes =
-  | AsyncIterable<ChatCompletionChunk>
-  | AsyncIterable<Completion>
-
-type ExtractType<T> = T extends AsyncIterable<infer U> ? U : never
-
-type OpenAIStreamReturnTypes = ExtractType<AsyncIterableOpenAIStreamReturnTypes>
 
 function isChatCompletionChunk(
   data: OpenAIStreamReturnTypes
@@ -287,58 +206,7 @@ function isCompletion(data: OpenAIStreamReturnTypes): data is Completion {
   )
 }
 
-export function OpenAIStream(
-  res: Response | AsyncIterableOpenAIStreamReturnTypes,
-  callbacks?: OpenAIStreamCallbacks & { onChunk?: (chunk: any) => void }
-): ReadableStream {
-  // Annotate the internal `messages` property for recursive function calls
-  const cb:
-    | undefined
-    | (OpenAIStreamCallbacks & {
-      [__internal__OpenAIFnMessagesSymbol]?: CreateMessage[]
-    } & { onChunk?: (chunk: ChatCompletionChunk | Completion) => void }) = callbacks
-
-  let stream: ReadableStream<Uint8Array>
-
-  if (Symbol.asyncIterator in res) {
-
-    stream = readableFromAsyncIterable(streamable(res, cb?.onChunk)).pipeThrough(
-      createCallbacksTransformer(
-        cb?.experimental_onFunctionCall
-          ? {
-            ...cb,
-            onFinal: undefined
-          }
-          : {
-            ...cb
-          }
-      )
-    )
-  } else {
-    stream = AIStream(
-      res,
-      parseOpenAIStream(),
-      cb?.experimental_onFunctionCall
-        ? {
-          ...cb,
-          onFinal: undefined
-        }
-        : {
-          ...cb
-        }
-    )
-  }
-
-
-  if (cb && cb.experimental_onFunctionCall) {
-    const functionCallTransformer = createFunctionCallTransformer(cb)
-    return stream.pipeThrough(functionCallTransformer)
-  } else {
-    return stream.pipeThrough(
-      createStreamDataTransformer(cb?.experimental_streamData)
-    )
-  }
-}
+const __internal__OpenAIFnMessagesSymbol = Symbol('internal_openai_fn_messages')
 
 function createFunctionCallTransformer(
   callbacks: OpenAIStreamCallbacks & {
@@ -485,4 +353,139 @@ function createFunctionCallTransformer(
       }
     }
   })
+}
+
+/**
+ * Reads chunks from OpenAI's new Streamable interface, which is essentially
+ * the same as the old Response body interface with an included SSE parser
+ * doing the parsing for us.
+ */
+
+function chunkToText(): (chunk: OpenAIStreamReturnTypes) => string | void {
+  const trimStartOfStream = trimStartOfStreamHelper()
+  let isFunctionStreamingIn: boolean
+  return json => {
+    if (
+      isChatCompletionChunk(json) &&
+      json.choices[0]?.delta?.function_call?.name
+    ) {
+      isFunctionStreamingIn = true
+      return `{"function_call": {"name": "${json.choices[0]?.delta?.function_call.name}", "arguments": "`
+    } else if (
+      isChatCompletionChunk(json) &&
+      json.choices[0]?.delta?.function_call?.arguments
+    ) {
+      const argumentChunk: string =
+        json.choices[0].delta.function_call.arguments
+
+      let escapedPartialJson = argumentChunk
+        .replace(/\\/g, '\\\\') // Replace backslashes first to prevent double escaping
+        .replace(/\//g, '\\/') // Escape slashes
+        .replace(/"/g, '\\"') // Escape double quotes
+        .replace(/\n/g, '\\n') // Escape new lines
+        .replace(/\r/g, '\\r') // Escape carriage returns
+        .replace(/\t/g, '\\t') // Escape tabs
+        .replace(/\f/g, '\\f') // Escape form feeds
+
+      return `${escapedPartialJson}`
+    } else if (
+      isFunctionStreamingIn &&
+      (json.choices[0]?.finish_reason === 'function_call' ||
+        json.choices[0]?.finish_reason === 'stop')
+    ) {
+      isFunctionStreamingIn = false // Reset the flag
+      return '"}}'
+    }
+    let content
+    const cp:OpenAIStreamReturnTypes = JSON.parse(JSON.stringify(json))
+    if (json.conversation_id && json.parent_message_id) {
+      content = `${json.choices[0].delta.content} {"conversation_id":"${json.conversation_id}","parent_message_id":"${json.parent_message_id}"}`
+    } else {
+      content = json.choices[0].delta.content
+    }
+    cp.choices[0].delta.content = content
+
+
+
+    const text = trimStartOfStream(
+      isChatCompletionChunk(cp) && cp.choices[0].delta.content
+        ? cp.choices[0].delta.content
+        : isCompletion(cp)
+          ? cp.choices[0].text
+          : ''
+    )
+    return text
+  }
+}
+
+async function* streamable(stream: AsyncIterableOpenAIStreamReturnTypes, cb?: (chunk: ChatCompletionChunk | Completion) => void) {
+  const extract = chunkToText()
+  for await (const chunk of stream) {
+    const text = extract(chunk)
+    cb && cb(chunk)
+
+    if (text) yield text
+  }
+}
+
+type AsyncIterableOpenAIStreamReturnTypes =
+  | AsyncIterable<ChatCompletionChunk>
+  | AsyncIterable<Completion>
+
+type ExtractType<T> = T extends AsyncIterable<infer U> ? U : never
+
+type OpenAIStreamReturnTypes = ExtractType<AsyncIterableOpenAIStreamReturnTypes>
+
+
+export function OpenAIStream(
+  res: Response | AsyncIterableOpenAIStreamReturnTypes,
+  callbacks?: OpenAIStreamCallbacks & { onChunk?: (chunk: any) => void }
+): ReadableStream {
+  // Annotate the internal `messages` property for recursive function calls
+  const cb:
+    | undefined
+    | (OpenAIStreamCallbacks & {
+      [__internal__OpenAIFnMessagesSymbol]?: CreateMessage[]
+    } & { onChunk?: (chunk: ChatCompletionChunk | Completion) => void }) = callbacks
+
+  let stream: ReadableStream<Uint8Array>
+
+  if (Symbol.asyncIterator in res) {
+
+    stream = readableFromAsyncIterable(streamable(res, cb?.onChunk)).pipeThrough(
+      createCallbacksTransformer(
+        cb?.experimental_onFunctionCall
+          ? {
+            ...cb,
+            onFinal: undefined
+          }
+          : {
+            ...cb
+          }
+      )
+    )
+  } else {
+    stream = AIStream(
+      res,
+      parseOpenAIStream(),
+      cb?.experimental_onFunctionCall
+        ? {
+          ...cb,
+          onFinal: undefined
+        }
+        : {
+          ...cb
+        }
+    )
+  }
+
+
+  if (cb && cb.experimental_onFunctionCall) {
+    const functionCallTransformer = createFunctionCallTransformer(cb)
+    return stream.pipeThrough(functionCallTransformer)
+  } else {
+    return stream.pipeThrough(
+      createStreamDataTransformer(cb?.experimental_streamData)
+    )
+  }
 }

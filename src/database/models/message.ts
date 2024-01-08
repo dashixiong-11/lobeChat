@@ -105,7 +105,8 @@ class _MessageModel extends BaseModel {
       conversation_id: undefined, parent_message_id: undefined
     }
 
-    let pattern = /\{"conversation_id":"[a-z0-9-]+","parent_message_id":"[a-z0-9-]+"\}/;
+    // let pattern = /\{"conversation_id":"[\da-z-]+","parent_message_id":"[\da-z-]+"\}/;
+    let pattern = /{"conversation_id":"[\da-z-]+","parent_message_id":"[\da-z-]+"}/;
     // let pattern = /\{conversation_id: "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}", parent_message_id: "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"\}/;
 
 
