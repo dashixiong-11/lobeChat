@@ -12,7 +12,6 @@ export const POST = async (req: Request) => {
 
   const openaiOrErrResponse = createBizOpenAI(req, payload.options.model);
 
-  console.log('payload3', payload);
   // if resOrOpenAI is a Response, it means there is an error,just return it
   if (openaiOrErrResponse instanceof Response) return openaiOrErrResponse;
 

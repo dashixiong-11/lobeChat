@@ -108,35 +108,16 @@ class _MessageModel extends BaseModel {
     // let pattern = /\{"conversation_id":"[\da-z-]+","parent_message_id":"[\da-z-]+"\}/;
     let pattern = /{"conversation_id":"[\da-z-]+","parent_message_id":"[\da-z-]+"}/;
     // let pattern = /\{conversation_id: "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}", parent_message_id: "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"\}/;
-
-
-    // 使用match方法来找到匹配的部分
-
-
     let modifiedText = ''
-
-
     if (message) {
-
-
       // 使用replace方法将匹配到的部分替换为空
       modifiedText = message.replace(pattern, '');
       const matchedPart = message.match(pattern)?.[0];
-
-      console.log('message', message);
-      console.log('matchedPart', matchedPart);
       if (matchedPart) {
-        console.log('matchedPart222', matchedPart);
         const parseJSON = JSON.parse(matchedPart || '')
-        console.log('parseJSON', parseJSON);
         Object.assign(ids, parseJSON)
       }
-
-
     }
-
-    console.log('ids', ids);
-
     return super._update(id, {
       content: modifiedText, ...ids
     });

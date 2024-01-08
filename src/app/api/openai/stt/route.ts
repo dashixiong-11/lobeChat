@@ -16,7 +16,6 @@ export const POST = async (req: Request) => {
     speech: speechBlob,
   } as OpenAISTTPayload;
 
-  console.log('payload2', payload);
   const openaiOrErrResponse = createBizOpenAI(req, payload.options.model);
 
   // if resOrOpenAI is a Response, it means there is an error,just return it

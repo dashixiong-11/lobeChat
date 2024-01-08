@@ -231,9 +231,6 @@ export const chatMessage: StateCreator<
       },
     ),
   refreshMessages: async () => {
-    // console.log(get().activeId,get().activeTopicId);
-    
-
     await mutate([get().activeId, get().activeTopicId]);
   },
 
@@ -375,7 +372,6 @@ export const chatMessage: StateCreator<
       onFinish: async (content) => {
         // update the content after fetch result
         
-        console.log('on finish', content);
         
         await messageService.updateMessageContent(assistantId, content);
         await refreshMessages();
@@ -383,7 +379,6 @@ export const chatMessage: StateCreator<
       onMessageHandle: async (text) => {
         output += text;
 
-        console.log('onMessageHandle', text);
         await messageService.updateMessageContent(assistantId, output);
         await refreshMessages();
 

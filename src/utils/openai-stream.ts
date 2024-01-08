@@ -230,7 +230,6 @@ function createFunctionCallTransformer(
     async transform(chunk, controller): Promise<void> {
       const message = decode(chunk)
       aggregatedFinalCompletionResponse += message
-      console.log('message',message);
       
 
       const shouldHandleAsFunction =
@@ -453,7 +452,6 @@ export function OpenAIStream(
   let stream: ReadableStream<Uint8Array>
 
   if (Symbol.asyncIterator in res) {
-    console.log(1);
     
 
     stream = readableFromAsyncIterable(streamable(res, cb?.onChunk)).pipeThrough(
@@ -469,7 +467,6 @@ export function OpenAIStream(
       )
     )
   } else {
-    console.log(2);
     
     stream = AIStream(
       res,

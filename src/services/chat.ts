@@ -44,8 +44,6 @@ class ChatService {
       model: payload.model,
       tools: enabledPlugins,
     });
-    console.log('oaiMessages',oaiMessages);
-    console.log('messages',messages);
     
 
 
