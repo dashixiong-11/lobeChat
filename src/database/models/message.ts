@@ -100,7 +100,7 @@ class _MessageModel extends BaseModel {
   }
 
   async update(id: string, data: DeepPartial<DB_Message>) {
-    const message = data.content
+    const { content: message, ...rest } = data
     const ids = {
       conversation_id: undefined, parent_message_id: undefined
     }
@@ -119,7 +119,7 @@ class _MessageModel extends BaseModel {
       }
     }
     return super._update(id, {
-      content: modifiedText, ...ids
+      content: modifiedText, ...ids,...rest
     });
   }
 
